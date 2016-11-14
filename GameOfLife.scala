@@ -14,36 +14,77 @@ object GameOfLife extends App {
 	val rows= 30;
 	val columns= 30;
 	val framerate= 10;
+	
+	val i= rows/2;
+	val j= columns/2;
 
 	val queenbee=
 		(gen: GameOfLifeGeneration) => {
 
-			val i= rows/2;
-			val j= columns/2;
-
-			// Cap
 			setAlive(gen)(i - 1, j - 2);
 			setAlive(gen)(i - 2, j - 1);
 			setAlive(gen)(i - 3, j);
 			setAlive(gen)(i - 2, j + 1);
 			setAlive(gen)(i - 1, j + 2);
 
-			// Center
 			setAlive(gen)(i, j - 1);
 			setAlive(gen)(i, j);
 			setAlive(gen)(i, j + 1);
 
-			// Base
 			setAlive(gen)(i + 1, j - 3);
 			setAlive(gen)(i + 1, j - 2);
 			setAlive(gen)(i + 1, j + 2);
 			setAlive(gen)(i + 1, j + 3);
 		};
 
-	val game= new GameOfLifeRunner(framerate);
+	val arrowThing=
+		(gen: GameOfLifeGeneration) => {
 
-	game.initialState_=(queenbee);
-	game.start(rows, columns);
+			val size= 6;
+
+			for(m <- -size to size) {
+				setAlive(gen)(i + m, j - m);
+			}
+
+			setAlive(gen)(i + size, j - (size + 1));
+			setAlive(gen)(i + size, j - (size + 2));
+			setAlive(gen)(i + size, j - (size + 3));
+			setAlive(gen)(i + size, j - (size + 4));
+			setAlive(gen)(i + size, j - (size + 5));
+
+			setAlive(gen)(i + (size + 1), j - size);
+			setAlive(gen)(i + (size + 2), j - size);
+			setAlive(gen)(i + (size + 3), j - size);
+			setAlive(gen)(i + (size + 4), j - size);
+			setAlive(gen)(i + (size + 5), j - size);
+
+			setAlive(gen)(i - size, j + (size + 1));
+			setAlive(gen)(i - (size - 1), j + (size + 1));
+		};
+
+
+	val carMoving=
+		(gen: GameOfLifeGeneration) => {
+
+			setAlive(gen)(i, j - 1);
+			setAlive(gen)(i, j);
+			setAlive(gen)(i, j + 1);
+			setAlive(gen)(i, j + 2);
+
+			setAlive(gen)(i + 1, j - 2);
+			setAlive(gen)(i + 3, j - 2);
+
+			setAlive(gen)(i + 1, j + 2);
+			setAlive(gen)(i + 2, j + 2);
+			setAlive(gen)(i + 3, j + 1);
+		};
+
+
+	val game= new GameOfLifeRunner(framerate, rows, columns);
+
+	game.initialState_=(carMoving);
+
+	game.start();
 }
 
 
@@ -52,7 +93,7 @@ object GameOfLife extends App {
  * 
  * @param framerate: Int  The number of frames to render in one second
  */
-class GameOfLifeRunner(framerate: Int) {
+class GameOfLifeRunner(framerate: Int, rows: Int, cols: Int) {
 
 	private val CLEAR_SCREEN_CODE= "\u001b[H\u001b[2J";
 
@@ -80,18 +121,27 @@ class GameOfLifeRunner(framerate: Int) {
 	}
 
 	def initialState_=(stateSetter: GameOfLifeGeneration => Unit) {
+
 		this._initialState= stateSetter;
+
+		this._setup();
 	}
 
-	def start(row: Int, col: Int) {
+	private def _setup() {
 
-		_prevGen= new GameOfLifeGeneration(row, col);
-		this._initialState(_prevGen);
+		this._prevGen= new GameOfLifeGeneration(rows, cols);
+		
+		this._initialState(this._prevGen);
+
+		this._prevGen.renderGrid();
+	}
+
+	def start() {
 
 		// Asynchronous calculation loop
 		val f = Future {
 			requestNextFrame(
-				this.calculationLoop(row, col)
+				this.calculationLoop(rows, cols)
 			);
 		}
 
