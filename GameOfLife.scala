@@ -7,25 +7,43 @@ import scala.util.Random
 
 object GameOfLife extends App {
 
-	// The rule for the game
-	val golRules= 
-		(live: Int, gen: GameOfLifeGeneration, row: Int, col: Int) => {
+	def setAlive(gen: GameOfLifeGeneration)(i: Int, j: Int) = {
+		gen.genGrid(i)(j)= gen.ALIVE_STATE;
+	}
 
-			if(gen.genGrid(row)(col) == gen.ALIVE_STATE && live == 3) {
-				true;
-			} else if(live == 2 || live == 3) {
-				true;
-			} else {
-				false;
-			}
+	val rows= 30;
+	val columns= 30;
+	val framerate= 10;
+
+	val queenbee=
+		(gen: GameOfLifeGeneration) => {
+
+			val i= rows/2;
+			val j= columns/2;
+
+			// Cap
+			setAlive(gen)(i - 1, j - 2);
+			setAlive(gen)(i - 2, j - 1);
+			setAlive(gen)(i - 3, j);
+			setAlive(gen)(i - 2, j + 1);
+			setAlive(gen)(i - 1, j + 2);
+
+			// Center
+			setAlive(gen)(i, j - 1);
+			setAlive(gen)(i, j);
+			setAlive(gen)(i, j + 1);
+
+			// Base
+			setAlive(gen)(i + 1, j - 3);
+			setAlive(gen)(i + 1, j - 2);
+			setAlive(gen)(i + 1, j + 2);
+			setAlive(gen)(i + 1, j + 3);
 		};
 
+	val game= new GameOfLifeRunner(framerate);
 
-	val game= new GameOfLifeRunner(10);
-
-	// Set the rules callback
-	game.rules_=(golRules);
-	game.start(50, 80);
+	game.initialState_=(queenbee);
+	game.start(rows, columns);
 }
 
 
@@ -43,8 +61,7 @@ class GameOfLifeRunner(framerate: Int) {
 	private var _thisGen: GameOfLifeGeneration= _;
 	private var _prevGen: GameOfLifeGeneration= _;
 
-	// Rules
-	private var _rules: (Int, GameOfLifeGeneration, Int, Int) => Boolean = _;
+	private var _initialState: GameOfLifeGeneration => Unit= _; 
 
 
 	// Put the current thread to sleep for `time`ms
@@ -62,14 +79,14 @@ class GameOfLifeRunner(framerate: Int) {
 		callback();
 	}
 
-	def rules_=(callback: (Int, GameOfLifeGeneration, Int, Int) => Boolean) {
-		this._rules= callback;
+	def initialState_=(stateSetter: GameOfLifeGeneration => Unit) {
+		this._initialState= stateSetter;
 	}
 
 	def start(row: Int, col: Int) {
 
 		_prevGen= new GameOfLifeGeneration(row, col);
-		_prevGen.setFirstGeneration();
+		this._initialState(_prevGen);
 
 		// Asynchronous calculation loop
 		val f = Future {
@@ -103,7 +120,7 @@ class GameOfLifeRunner(framerate: Int) {
 
 		_thisGen= new GameOfLifeGeneration(row, col);
 
-		_thisGen.inheritFrom(_prevGen)(this._rules);
+		_thisGen.inheritFrom(_prevGen);
 
 		_prevGen= _thisGen;
 
@@ -148,28 +165,6 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		}
 	}
 
-	// Set the first generation of cells
-	def setFirstGeneration() {
-
-		val random= new Random();
-
-		this.genGrid(rows/2)(cols/2)= ALIVE_STATE;
-		this.genGrid(rows/2 - 1)(cols/2 - 1)= ALIVE_STATE;
-		this.genGrid(rows/2 - 1)(cols/2)= ALIVE_STATE;
-		this.genGrid(rows/2 - 1)(cols/2 + 1)= ALIVE_STATE;
-
-		// for(i <- 0 until rows) {
-
-		// 	for(j <- 0 until cols) {
-
-		// 		this.genGrid(i)(j)= 
-		// 			if(random.nextInt(10) == 0)
-		// 				this.ALIVE_STATE
-		// 			else
-		// 				this.DEAD_STATE;
-		// 	}
-		// }
-	}
 
 	def getNeighbourLiveCount(indexI: Int, indexJ: Int): Int = {
 
@@ -207,8 +202,21 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		return numOfLiveCells;
 	}
 
-	// Inherit cell properties from the previous generation with the help of rules
-	def inheritFrom(prevGen: GameOfLifeGeneration)(rules: (Int, GameOfLifeGeneration, Int, Int) => Boolean) {
+	def lifeRules(live: Int, gen: GameOfLifeGeneration, row: Int, col: Int): Boolean = {
+
+		if(gen.genGrid(row)(col) == gen.ALIVE_STATE) {
+			if(live == 2 || live == 3) {
+				return true;
+			}
+		} else if(live == 3) {
+			return true;
+		}
+		
+		return false;
+	}
+
+	// Inherit cell properties from the previous generation
+	def inheritFrom(prevGen: GameOfLifeGeneration) {
 
 		for(i <- 0 until rows) {
 
@@ -216,7 +224,7 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 
 				val numOfLiveCells= prevGen.getNeighbourLiveCount(i, j);
 
-				val nextCellState= rules(numOfLiveCells, prevGen, i, j);
+				val nextCellState= this.lifeRules(numOfLiveCells, prevGen, i, j);
 
 				this.genGrid(i)(j)= 
 					if(nextCellState)
