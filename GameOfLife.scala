@@ -35,7 +35,45 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		this.genGrid(rows/2 - 1)(cols/2 - 1)= ALIVE_STATE;
 		this.genGrid(rows/2 - 1)(cols/2)= ALIVE_STATE;
 		this.genGrid(rows/2 - 1)(cols/2 + 1)= ALIVE_STATE;
+	}
 
+	def getNeighbourLiveCount(indexI: Int, indexJ: Int): Int = {
+
+		var numOfLiveCells= 0;
+
+		var m= 0;
+		var n= 0;
+
+		for(i <- -1 to 1) {
+			
+			m= indexI + i;
+
+			for(j <- -1 to 1) {
+
+				n= indexJ + j;
+
+				if(i != 0 || j != 0) {
+					
+					if(m >= rows) {
+						m %= rows;
+					} else if(m < 0) {
+						m = rows + m;
+					}
+
+					if(n >= cols) {
+						n %= cols;
+					} else if(n < 0) {
+						n = cols + n;
+					}
+
+					if(this.genGrid(m)(n) == ALIVE_STATE) {
+						numOfLiveCells += 1;
+					}
+				}
+			}
+		}
+
+		return numOfLiveCells;
 	}
 
 	def inheritFrom(prevGen: GameOfLifeGeneration) {
@@ -44,30 +82,9 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 
 			for(j <- 0 until cols) {
 
-				var numOfLiveCells= 0;
-
-				for(m <- -1 to 1) {
-					
-					for(n <- -1 to 1) {
-
-						var indexM= m;
-						var indexN= n;
-
-						if(i + indexM <= rows)
-							indexM %= rows;
-
-						if(j + indexN <= cols)
-							indexN %= cols;						
-
-						if(prevGen.genGrid(i + m)(j + n) == ALIVE_STATE) {
-							numOfLiveCells += 1;
-						}
-					}
-				}
+				var numOfLiveCells= prevGen.getNeighbourLiveCount(i, j);
 
 				if(prevGen.genGrid(i)(j) == ALIVE_STATE) {
-
-					numOfLiveCells -= 1;
 
 					if(numOfLiveCells == 3) {
 						this.genGrid(i)(j)= ALIVE_STATE;
@@ -85,7 +102,7 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 }
 
 
-object GameOfLife {
+class GameOfLife(framerate: Int) {
 
 	val CLEAR_SCREEN_CODE= "\u001b[H\u001b[2J";
 
@@ -102,48 +119,62 @@ object GameOfLife {
 	// Clears the terminal screen
 	def clearScreen() = println(CLEAR_SCREEN_CODE);
 
-	def init(row: Int, col: Int)() {
+	def requestNextFrame(callback: ()=> Unit) {
+
+		// 16 second sleep for 60fps
+		sleep((1000/framerate).toInt);
+
+		callback();
+	}
+
+	def start(row: Int, col: Int) {
 
 		prevGen= new GameOfLifeGeneration(row, col);
 		prevGen.setFirstGeneration();
 
 		// Asynchronous render loop
 		val f = Future {
-			while(true)
-				this.calculationLoop(row, col);
+			requestNextFrame(
+				this.calculationLoop(row, col)
+			);
 		}
 
-		sleep(16);
-
 		// On the main process so that it doesnt exit out
-		while(true)
-			this.runRenderLoop()
+		// Need to skip a frame to render to make sure the calculations are complete
+		requestNextFrame(
+			() => requestNextFrame(
+				this.runRenderLoop()
+			)
+		);
 	}
 
-	def runRenderLoop() {
-
-		// 16 second sleep for 60fps
-		sleep(16);
+	def runRenderLoop()() {
 
 		this.clearScreen();
 
-		// Render the stuff to stdout if its ready to render
-		if(this.frameReadyToRender)
-			thisGen.renderGrid();
+		// Render the stuff to stdout
+		thisGen.renderGrid();
+
+		requestNextFrame(
+			this.runRenderLoop()
+		);
 	}
 
-	def calculationLoop(row: Int, col: Int) {
+	def calculationLoop(row: Int, col: Int)() {
 
 		thisGen= new GameOfLifeGeneration(row, col);
-		
-		this.frameReadyToRender= false;
-		
+
 		thisGen.inheritFrom(prevGen);
 
-		this.frameReadyToRender= true;
+		prevGen= thisGen;
 
-		sleep(16);
+		requestNextFrame(
+			this.calculationLoop(row, col)
+		);
 	}
 }
 
-GameOfLife.init(10, 10)();
+
+val game= new GameOfLife(3);
+
+game.start(50, 50);
