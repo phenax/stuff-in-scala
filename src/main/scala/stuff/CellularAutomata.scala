@@ -1,3 +1,4 @@
+package stuff;
 
 import scala.util.Random
 

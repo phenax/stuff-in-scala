@@ -1,91 +1,107 @@
+package stuff;
 
 import scala.concurrent.{Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
-
-
 object GameOfLife extends App {
 
-	def setAlive(gen: GameOfLifeGeneration)(i: Int, j: Int) = {
-		gen.genGrid(i)(j)= gen.ALIVE_STATE;
-	}
-
+	// Number of rows and columns in the 2D grid
 	val rows= 30;
 	val columns= 30;
+
+	// Number of frames per second
 	val framerate= 10;
-	
+
+	// The number of frames you wanna run(-1 = Infinite)
+	val numberOfFrames= -1;
+
+	// The midpoint
 	val i= rows/2;
 	val j= columns/2;
 
-	val queenbee=
-		(gen: GameOfLifeGeneration) => {
+	val game= new GameOfLife(framerate, rows, columns);
 
-			setAlive(gen)(i - 1, j - 2);
-			setAlive(gen)(i - 2, j - 1);
-			setAlive(gen)(i - 3, j);
-			setAlive(gen)(i - 2, j + 1);
-			setAlive(gen)(i - 1, j + 2);
+	// Setter for the initial state procedure
+	game.initialState_=(GOLStates.initialState(i, j));
 
-			setAlive(gen)(i, j - 1);
-			setAlive(gen)(i, j);
-			setAlive(gen)(i, j + 1);
+	game.start(numberOfFrames);
+}
 
-			setAlive(gen)(i + 1, j - 3);
-			setAlive(gen)(i + 1, j - 2);
-			setAlive(gen)(i + 1, j + 2);
-			setAlive(gen)(i + 1, j + 3);
-		};
+object GOLStates {
 
-	val arrowThing=
-		(gen: GameOfLifeGeneration) => {
+	def initialState(i: Int, j: Int)(gen: GameOfLifeGeneration) {
+
+		queenbee();
+
+		def queenbee() {
+
+			gen.ressurectCell(i - 1, j - 2);
+			gen.ressurectCell(i - 2, j - 1);
+			gen.ressurectCell(i - 3, j);
+			gen.ressurectCell(i - 2, j + 1);
+			gen.ressurectCell(i - 1, j + 2);
+
+			gen.ressurectCell(i, j - 1);
+			gen.ressurectCell(i, j);
+			gen.ressurectCell(i, j + 1);
+
+			gen.ressurectCell(i + 1, j - 3);
+			gen.ressurectCell(i + 1, j - 2);
+			gen.ressurectCell(i + 1, j + 2);
+			gen.ressurectCell(i + 1, j + 3);
+		}
+
+		def arrowThing() {
 
 			val size= 6;
 
 			for(m <- -size to size) {
-				setAlive(gen)(i + m, j - m);
+				gen.ressurectCell(i + m, j - m);
 			}
 
-			setAlive(gen)(i + size, j - (size + 1));
-			setAlive(gen)(i + size, j - (size + 2));
-			setAlive(gen)(i + size, j - (size + 3));
-			setAlive(gen)(i + size, j - (size + 4));
-			setAlive(gen)(i + size, j - (size + 5));
+			gen.ressurectCell(i + size, j - (size + 1));
+			gen.ressurectCell(i + size, j - (size + 2));
+			gen.ressurectCell(i + size, j - (size + 3));
+			gen.ressurectCell(i + size, j - (size + 4));
+			gen.ressurectCell(i + size, j - (size + 5));
 
-			setAlive(gen)(i + (size + 1), j - size);
-			setAlive(gen)(i + (size + 2), j - size);
-			setAlive(gen)(i + (size + 3), j - size);
-			setAlive(gen)(i + (size + 4), j - size);
-			setAlive(gen)(i + (size + 5), j - size);
+			gen.ressurectCell(i + (size + 1), j - size);
+			gen.ressurectCell(i + (size + 2), j - size);
+			gen.ressurectCell(i + (size + 3), j - size);
+			gen.ressurectCell(i + (size + 4), j - size);
+			gen.ressurectCell(i + (size + 5), j - size);
 
-			setAlive(gen)(i - size, j + (size + 1));
-			setAlive(gen)(i - (size - 1), j + (size + 1));
-		};
-
-
-	val carMoving=
-		(gen: GameOfLifeGeneration) => {
-
-			setAlive(gen)(i, j - 1);
-			setAlive(gen)(i, j);
-			setAlive(gen)(i, j + 1);
-			setAlive(gen)(i, j + 2);
-
-			setAlive(gen)(i + 1, j - 2);
-			setAlive(gen)(i + 3, j - 2);
-
-			setAlive(gen)(i + 1, j + 2);
-			setAlive(gen)(i + 2, j + 2);
-			setAlive(gen)(i + 3, j + 1);
-		};
+			gen.ressurectCell(i - size, j + (size + 1));
+			gen.ressurectCell(i - (size - 1), j + (size + 1));
+		}
 
 
-	val game= new GameOfLifeRunner(framerate, rows, columns);
+		def carMoving() {
 
-	game.initialState_=(carMoving);
+			gen.ressurectCell(i, j - 1);
+			gen.ressurectCell(i, j);
+			gen.ressurectCell(i, j + 1);
+			gen.ressurectCell(i, j + 2);
 
-	game.start();
+			gen.ressurectCell(i + 1, j - 2);
+			gen.ressurectCell(i + 3, j - 2);
+
+			gen.ressurectCell(i + 1, j + 2);
+			gen.ressurectCell(i + 2, j + 2);
+			gen.ressurectCell(i + 3, j + 1);
+		}
+
+		def customStuff() {
+
+			gen.ressurectCell(i, j);
+			gen.ressurectCell(i - 1, j - 1);
+			gen.ressurectCell(i - 1, j);
+			gen.ressurectCell(i - 1, j + 1);
+		}
+	}
 }
+
 
 
 /**
@@ -93,7 +109,7 @@ object GameOfLife extends App {
  * 
  * @param framerate: Int  The number of frames to render in one second
  */
-class GameOfLifeRunner(framerate: Int, rows: Int, cols: Int) {
+class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 
 	private val CLEAR_SCREEN_CODE= "\u001b[H\u001b[2J";
 
@@ -103,6 +119,8 @@ class GameOfLifeRunner(framerate: Int, rows: Int, cols: Int) {
 	private var _prevGen: GameOfLifeGeneration= _;
 
 	private var _initialState: GameOfLifeGeneration => Unit= _; 
+
+	private var _totalNumberOfFrames= 0;
 
 
 	// Put the current thread to sleep for `time`ms
@@ -136,7 +154,9 @@ class GameOfLifeRunner(framerate: Int, rows: Int, cols: Int) {
 		this._prevGen.renderGrid();
 	}
 
-	def start() {
+	def start(frames: Int = -1) {
+
+		this._totalNumberOfFrames= frames;
 
 		// Asynchronous calculation loop
 		val f = Future {
@@ -161,9 +181,18 @@ class GameOfLifeRunner(framerate: Int, rows: Int, cols: Int) {
 		// Render the stuff to stdout
 		_thisGen.renderGrid();
 
-		requestNextFrame(
-			this.runRenderLoop()
-		);
+		// Decremenent the frames left
+		if(this._totalNumberOfFrames > 0) {
+			this._totalNumberOfFrames -= 1;
+		}
+
+		if(this._totalNumberOfFrames != 0) {
+			requestNextFrame(
+				this.runRenderLoop()
+			);
+		} else {
+			System.exit(0);
+		}
 	}
 
 	def calculationLoop(row: Int, col: Int)() {
@@ -198,7 +227,9 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 	// The generation grid
 	val genGrid= Array.fill[Char](rows, cols) { DEAD_STATE };
 
-	// Render the grid to the terminal
+	/**
+	 * Renders the current generation grid to stdout
+	 */
 	def renderGrid() {
 
 		// Loop through the row
@@ -215,7 +246,25 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		}
 	}
 
+	/**
+	 * Set the cell state to ALIVE
+	 *
+	 * @param x  Cell position in the column
+	 * @param y  Cell position in the row
+	 */
+	def ressurectCell(x: Int, y: Int) = {
+		this.genGrid(x)(y)= this.ALIVE_STATE;
+	}
 
+
+	/**
+	 * Get the number of cells alive around the current cell
+	 *
+	 * @param indexI The y-coordinate(row) of the cell
+	 * @param indexJ The x-coordinate(column) of the cell
+	 *
+	 * @return       Number of cells alive
+	 */
 	def getNeighbourLiveCount(indexI: Int, indexJ: Int): Int = {
 
 		var numOfLiveCells= 0;
@@ -252,6 +301,14 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		return numOfLiveCells;
 	}
 
+	/**
+	 * Game of life rules
+	 *
+	 * @param live  The number of live cells in the neighborhood
+	 * @param gen   The current generation
+	 * @param row   Cell position in the row
+	 * @param col   Cell position in the column
+	 */
 	def lifeRules(live: Int, gen: GameOfLifeGeneration, row: Int, col: Int): Boolean = {
 
 		if(gen.genGrid(row)(col) == gen.ALIVE_STATE) {
@@ -265,7 +322,11 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 		return false;
 	}
 
-	// Inherit cell properties from the previous generation
+	/**
+	 * Inherit cell properties from the previous generation
+	 * 
+	 * @param  prevGen   The previous generation
+	 */
 	def inheritFrom(prevGen: GameOfLifeGeneration) {
 
 		for(i <- 0 until rows) {
