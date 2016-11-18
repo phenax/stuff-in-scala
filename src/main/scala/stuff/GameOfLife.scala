@@ -16,89 +16,76 @@ object GameOfLife extends App {
 	// The number of frames you wanna run(-1 = Infinite)
 	val numberOfFrames= -1;
 
-	// The midpoint
-	val i= rows/2;
-	val j= columns/2;
-
 	val game= new GameOfLife(framerate, rows, columns);
+	val states= new GOLStates(rows/2, columns/2);
 
 	// Setter for the initial state procedure
-	game.initialState_=(GOLStates.initialState(i, j));
+	game.initialState_=(states.queenBee);
 
 	game.start(numberOfFrames);
 }
 
-object GOLStates {
+class GOLStates(midY: Int, midX: Int) {
 
-	def initialState(i: Int, j: Int)(gen: GameOfLifeGeneration) {
+	val i= midY;
+	val j= midX;
 
-		queenbee();
+	def queenBee(gen: GameOfLifeGeneration) {
 
-		def queenbee() {
+		gen.ressurectCell(i - 1, j - 2);
+		gen.ressurectCell(i - 2, j - 1);
+		gen.ressurectCell(i - 3, j);
+		gen.ressurectCell(i - 2, j + 1);
+		gen.ressurectCell(i - 1, j + 2);
 
-			gen.ressurectCell(i - 1, j - 2);
-			gen.ressurectCell(i - 2, j - 1);
-			gen.ressurectCell(i - 3, j);
-			gen.ressurectCell(i - 2, j + 1);
-			gen.ressurectCell(i - 1, j + 2);
+		gen.ressurectCell(i, j - 1);
+		gen.ressurectCell(i, j);
+		gen.ressurectCell(i, j + 1);
 
-			gen.ressurectCell(i, j - 1);
-			gen.ressurectCell(i, j);
-			gen.ressurectCell(i, j + 1);
+		gen.ressurectCell(i + 1, j - 3);
+		gen.ressurectCell(i + 1, j - 2);
+		gen.ressurectCell(i + 1, j + 2);
+		gen.ressurectCell(i + 1, j + 3);
+	}
 
-			gen.ressurectCell(i + 1, j - 3);
-			gen.ressurectCell(i + 1, j - 2);
-			gen.ressurectCell(i + 1, j + 2);
-			gen.ressurectCell(i + 1, j + 3);
+	def lineMagic(gen: GameOfLifeGeneration) {
+
+		val size= 5;
+
+		for(m <- -size to size) {
+			gen.ressurectCell(i + m, j - m);
 		}
 
-		def arrowThing() {
+		gen.ressurectCell(i + size, j - (size + 1));
+		gen.ressurectCell(i + size, j - (size + 2));
+		gen.ressurectCell(i + size, j - (size + 3));
+		gen.ressurectCell(i + size, j - (size + 4));
+		gen.ressurectCell(i + size, j - (size + 5));
 
-			val size= 6;
+		gen.ressurectCell(i + (size + 1), j - size);
+		gen.ressurectCell(i + (size + 2), j - size);
+		gen.ressurectCell(i + (size + 3), j - size);
+		gen.ressurectCell(i + (size + 4), j - size);
+		gen.ressurectCell(i + (size + 5), j - size);
 
-			for(m <- -size to size) {
-				gen.ressurectCell(i + m, j - m);
-			}
-
-			gen.ressurectCell(i + size, j - (size + 1));
-			gen.ressurectCell(i + size, j - (size + 2));
-			gen.ressurectCell(i + size, j - (size + 3));
-			gen.ressurectCell(i + size, j - (size + 4));
-			gen.ressurectCell(i + size, j - (size + 5));
-
-			gen.ressurectCell(i + (size + 1), j - size);
-			gen.ressurectCell(i + (size + 2), j - size);
-			gen.ressurectCell(i + (size + 3), j - size);
-			gen.ressurectCell(i + (size + 4), j - size);
-			gen.ressurectCell(i + (size + 5), j - size);
-
-			gen.ressurectCell(i - size, j + (size + 1));
-			gen.ressurectCell(i - (size - 1), j + (size + 1));
-		}
+		gen.ressurectCell(i - size, j + (size + 1));
+		gen.ressurectCell(i - (size - 1), j + (size + 1));
+	}
 
 
-		def carMoving() {
+	def birdey(gen: GameOfLifeGeneration) {
 
-			gen.ressurectCell(i, j - 1);
-			gen.ressurectCell(i, j);
-			gen.ressurectCell(i, j + 1);
-			gen.ressurectCell(i, j + 2);
+		gen.ressurectCell(i, j - 1);
+		gen.ressurectCell(i, j);
+		gen.ressurectCell(i, j + 1);
+		gen.ressurectCell(i, j + 2);
 
-			gen.ressurectCell(i + 1, j - 2);
-			gen.ressurectCell(i + 3, j - 2);
+		gen.ressurectCell(i + 1, j - 2);
+		gen.ressurectCell(i + 3, j - 2);
 
-			gen.ressurectCell(i + 1, j + 2);
-			gen.ressurectCell(i + 2, j + 2);
-			gen.ressurectCell(i + 3, j + 1);
-		}
-
-		def customStuff() {
-
-			gen.ressurectCell(i, j);
-			gen.ressurectCell(i - 1, j - 1);
-			gen.ressurectCell(i - 1, j);
-			gen.ressurectCell(i - 1, j + 1);
-		}
+		gen.ressurectCell(i + 1, j + 2);
+		gen.ressurectCell(i + 2, j + 2);
+		gen.ressurectCell(i + 3, j + 1);
 	}
 }
 
@@ -111,25 +98,37 @@ object GOLStates {
  */
 class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 
+	// Terminal magic to clear the screen
 	private val CLEAR_SCREEN_CODE= "\u001b[H\u001b[2J";
-
 
 	// The generations
 	private var _thisGen: GameOfLifeGeneration= _;
 	private var _prevGen: GameOfLifeGeneration= _;
 
+	// The initial state setting procedure
 	private var _initialState: GameOfLifeGeneration => Unit= _; 
 
+	// The frame left before terminating
 	private var _totalNumberOfFrames= 0;
 
 
-	// Put the current thread to sleep for `time`ms
+	/**
+	 * Halts the current thread for some time
+	 * 
+	 * @param time  Sleep duration in milliseconds
+	 */
 	def sleep(time: Int) = Thread.sleep(time);
 
-	// Clears the terminal screen
+	/**
+	 * Clear the terminal
+	 */
 	def clearScreen() = println(CLEAR_SCREEN_CODE);
 
-	// Execute after frame delay
+	/**
+	 * Skips a frame duration before executing the callback
+	 * 
+	 * @param  callback  Callback to run after skipping a frame
+	 */
 	def requestNextFrame(callback: ()=> Unit) {
 
 		// 16 second sleep for 60fps
@@ -138,6 +137,9 @@ class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 		callback();
 	}
 
+	/**
+	 * Setter for the initial game state
+	 */
 	def initialState_=(stateSetter: GameOfLifeGeneration => Unit) {
 
 		this._initialState= stateSetter;
@@ -145,6 +147,9 @@ class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 		this._setup();
 	}
 
+	/**
+	 * Initializes the grid and renders the first frame
+	 */
 	private def _setup() {
 
 		this._prevGen= new GameOfLifeGeneration(rows, cols);
@@ -154,19 +159,27 @@ class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 		this._prevGen.renderGrid();
 	}
 
+
+	/**
+	 * Starts the render and calculation loops
+	 * 
+	 * @param frames  The number of frames to render
+	 */
 	def start(frames: Int = -1) {
 
+		// Set the total number of frames left before 
+		// the program terminates
 		this._totalNumberOfFrames= frames;
 
 		// Asynchronous calculation loop
-		val f = Future {
+		Future {
 			requestNextFrame(
 				this.calculationLoop(rows, cols)
 			);
 		}
 
-		// On the main process so that it doesnt exit out
-		// Need to skip a frame to render to make sure the calculations are complete
+		// Need to skip a frame to start the render loop to 
+		// make sure the initial calculations are complete
 		requestNextFrame(
 			() => requestNextFrame(
 				this.runRenderLoop()
@@ -174,6 +187,9 @@ class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 		);
 	}
 
+	/**
+	 * Render loop - Renders the board on every frame
+	 */
 	def runRenderLoop()() {
 
 		this.clearScreen();
@@ -195,6 +211,10 @@ class GameOfLife(framerate: Int, rows: Int, cols: Int) {
 		}
 	}
 
+
+	/**
+	 * Calculation loop - Calculates the next generation on every frame
+	 */
 	def calculationLoop(row: Int, col: Int)() {
 
 		_thisGen= new GameOfLifeGeneration(row, col);
