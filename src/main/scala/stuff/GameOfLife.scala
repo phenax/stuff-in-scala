@@ -16,14 +16,21 @@ object GameOfLife extends App {
 	// The number of frames you wanna run(-1 = Infinite)
 	val numberOfFrames= -1;
 
+
 	val game= new GameOfLife(framerate, rows, columns);
 	val states= new GOLStates(rows/2, columns/2);
 
-	// Setter for the initial state procedure
+	/*
+	 * Available initial states
+	 *   - queenBee
+	 *   - lineMagic
+	 *   - birdey
+	 */
 	game.initialState_=(states.queenBee);
 
 	game.start(numberOfFrames);
 }
+
 
 class GOLStates(midY: Int, midX: Int) {
 
@@ -32,20 +39,20 @@ class GOLStates(midY: Int, midX: Int) {
 
 	def queenBee(gen: GameOfLifeGeneration) {
 
-		gen.ressurectCell(i - 1, j - 2);
-		gen.ressurectCell(i - 2, j - 1);
-		gen.ressurectCell(i - 3, j);
-		gen.ressurectCell(i - 2, j + 1);
-		gen.ressurectCell(i - 1, j + 2);
+		gen.ressurect(i - 1, j - 2);
+		gen.ressurect(i - 2, j - 1);
+		gen.ressurect(i - 3, j);
+		gen.ressurect(i - 2, j + 1);
+		gen.ressurect(i - 1, j + 2);
 
-		gen.ressurectCell(i, j - 1);
-		gen.ressurectCell(i, j);
-		gen.ressurectCell(i, j + 1);
+		gen.ressurect(i, j - 1);
+		gen.ressurect(i, j);
+		gen.ressurect(i, j + 1);
 
-		gen.ressurectCell(i + 1, j - 3);
-		gen.ressurectCell(i + 1, j - 2);
-		gen.ressurectCell(i + 1, j + 2);
-		gen.ressurectCell(i + 1, j + 3);
+		gen.ressurect(i + 1, j - 3);
+		gen.ressurect(i + 1, j - 2);
+		gen.ressurect(i + 1, j + 2);
+		gen.ressurect(i + 1, j + 3);
 	}
 
 	def lineMagic(gen: GameOfLifeGeneration) {
@@ -53,39 +60,39 @@ class GOLStates(midY: Int, midX: Int) {
 		val size= 5;
 
 		for(m <- -size to size) {
-			gen.ressurectCell(i + m, j - m);
+			gen.ressurect(i + m, j - m);
 		}
 
-		gen.ressurectCell(i + size, j - (size + 1));
-		gen.ressurectCell(i + size, j - (size + 2));
-		gen.ressurectCell(i + size, j - (size + 3));
-		gen.ressurectCell(i + size, j - (size + 4));
-		gen.ressurectCell(i + size, j - (size + 5));
+		gen.ressurect(i + size, j - (size + 1));
+		gen.ressurect(i + size, j - (size + 2));
+		gen.ressurect(i + size, j - (size + 3));
+		gen.ressurect(i + size, j - (size + 4));
+		gen.ressurect(i + size, j - (size + 5));
 
-		gen.ressurectCell(i + (size + 1), j - size);
-		gen.ressurectCell(i + (size + 2), j - size);
-		gen.ressurectCell(i + (size + 3), j - size);
-		gen.ressurectCell(i + (size + 4), j - size);
-		gen.ressurectCell(i + (size + 5), j - size);
+		gen.ressurect(i + (size + 1), j - size);
+		gen.ressurect(i + (size + 2), j - size);
+		gen.ressurect(i + (size + 3), j - size);
+		gen.ressurect(i + (size + 4), j - size);
+		gen.ressurect(i + (size + 5), j - size);
 
-		gen.ressurectCell(i - size, j + (size + 1));
-		gen.ressurectCell(i - (size - 1), j + (size + 1));
+		gen.ressurect(i - size, j + (size + 1));
+		gen.ressurect(i - (size - 1), j + (size + 1));
 	}
 
 
 	def birdey(gen: GameOfLifeGeneration) {
 
-		gen.ressurectCell(i, j - 1);
-		gen.ressurectCell(i, j);
-		gen.ressurectCell(i, j + 1);
-		gen.ressurectCell(i, j + 2);
+		gen.ressurect(i, j - 1);
+		gen.ressurect(i, j);
+		gen.ressurect(i, j + 1);
+		gen.ressurect(i, j + 2);
 
-		gen.ressurectCell(i + 1, j - 2);
-		gen.ressurectCell(i + 3, j - 2);
+		gen.ressurect(i + 1, j - 2);
+		gen.ressurect(i + 3, j - 2);
 
-		gen.ressurectCell(i + 1, j + 2);
-		gen.ressurectCell(i + 2, j + 2);
-		gen.ressurectCell(i + 3, j + 1);
+		gen.ressurect(i + 1, j + 2);
+		gen.ressurect(i + 2, j + 2);
+		gen.ressurect(i + 3, j + 1);
 	}
 }
 
@@ -272,7 +279,7 @@ class GameOfLifeGeneration(rows: Int, cols: Int) {
 	 * @param x  Cell position in the column
 	 * @param y  Cell position in the row
 	 */
-	def ressurectCell(x: Int, y: Int) = {
+	def ressurect(x: Int, y: Int) = {
 		this.genGrid(x)(y)= this.ALIVE_STATE;
 	}
 
