@@ -2,16 +2,31 @@ package stuff;
 
 import scala.util.Random
 
-
 object CellularAutomata extends App {
 
 	// Start
-	CARunner.init(20, 20)(
+	CARunner.init(20, 20)(rule3);
 
-		// Anonymous function for rules
-		(prevCell: Boolean, curCell: Boolean, nextCell: Boolean) => 
-			if(curCell == nextCell) true else false
-	);
+	// Available rules
+
+	def rule1(prevCell: Boolean, curCell: Boolean, nextCell: Boolean): Boolean = {
+		curCell == nextCell
+	}
+
+	def rule2(prevCell: Boolean, curCell: Boolean, nextCell: Boolean): Boolean = {
+		// http://atlas.wolfram.com/01/01/136/
+		curCell && nextCell
+	}
+
+	def rule3(prevCell: Boolean, curCell: Boolean, nextCell: Boolean): Boolean = {
+		// http://atlas.wolfram.com/01/01/126/
+		prevCell != curCell || curCell != nextCell
+	}
+
+	def rule4(prevCell: Boolean, curCell: Boolean, nextCell: Boolean): Boolean = {
+		// http://atlas.wolfram.com/01/01/190/
+		prevCell != curCell || nextCell
+	}
 }
 
 
@@ -27,7 +42,7 @@ object CARunner {
 
 		// Generate first random generation
 		prevRow= new Generation(col);
-		prevRow.fillRandomGeneration();
+		prevRow.randomizeGeneration();
 
 		// Print the generation
 		prevRow.printGeneration();
@@ -76,32 +91,47 @@ object CARunner {
  * 
  * @param col: Int  Number of cells in a generation
  */
-class Generation(col: Int) {
+class Generation(columnCount: Int) {
 
+	// Cell states
 	val ALIVE: Boolean= true;
 	val DEAD: Boolean= false;
 
+	// Cell state representation
 	var deadChar: Char= ' ';
 	var aliveChar: Char= '#';
 
-	private var columnCount= col;
+	// Generation grid
 	private val column= new Array[Boolean](columnCount);
+
+	// Column size
 	private var current= 0;
 
-	def get(j: Int): Boolean= {
+	/**
+	 * Get the state of the cell at an index position of col
+	 * 
+	 * @param col  The column position to get
+	 */
+	def get(col: Int): Boolean = {
 
-		if(j >= this.columnCount - 1)
+		if(col >= columnCount - 1)
 			return this.column(0);
 
-		if(j < 0)
-			return this.column(this.columnCount - 1);
+		if(col < 0)
+			return this.column(columnCount - 1);
 
-		return this.column(j);
+		return this.column(col);
 	}
 
+
+	/**
+	 * Add a cell to the current generation
+	 * 
+	 * @param state The state of the cell(DOA)
+	 */
 	def add(state: Boolean) {
 
-		if(this.current >= this.columnCount)
+		if(this.current >= columnCount)
 			return;
 
 		this.column(this.current)= state;
@@ -109,18 +139,27 @@ class Generation(col: Int) {
 		this.current += 1;
 	}
 
-	def printCell(j: Int) {
+
+	/**
+	 * Print the cell state
+	 * 
+	 * @param  col  The column position of the cell
+	 */
+	def printCell(col: Int) {
 
 		print(
 			" " + 
 
-			(if(this.column(j)) 
+			(if(this.column(col)) 
 				this.aliveChar 
 			else
 				this.deadChar)
 		)
 	}
 
+	/**
+	 * Print the current generation
+	 */
 	def printGeneration() {
 
 		for(j <- 0 until columnCount)
@@ -129,12 +168,15 @@ class Generation(col: Int) {
 		println();
 	}
 
-	def fillRandomGeneration() {
+	/**
+	 * Generate a random row of cells
+	 */
+	def randomizeGeneration() {
 
 		for(cell <- this.column) {
-			
+
 			val random= Random;
-			
+
 			this.add(if(random.nextInt(2) == 1) true else false);
 		}
 	}
