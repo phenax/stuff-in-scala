@@ -26,6 +26,7 @@ class BSTNode[T](value: T) {
 		this._rightNode= _right;
 
 	def isTail() = (_leftNode == null && _rightNode == null);
+	def isNotTail() = !isTail();
 
-	override def toString()= "---" + value.toString();
+	override def toString()= value.toString;
 }
