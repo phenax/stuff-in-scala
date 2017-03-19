@@ -1,6 +1,7 @@
+package algos;
 
 
 class SortingAlgorithms {
 
-	
+
 }
